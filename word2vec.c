@@ -625,6 +625,15 @@ void TrainModel() {
   fclose(fo);
 }
 
+
+/**
+ * @brief 参数解析
+ * 
+ * @param str 待查找的目标参数
+ * @param argc 命令行参数个数
+ * @param argv 命令行参数列表
+ * @return int, 找到 str 指定的参数, 返回其在 argv 中的索引; 否则返回 -1
+ */
 int ArgPos(char *str, int argc, char **argv) {
   int a;
   for (a = 1; a < argc; a++) if (!strcmp(str, argv[a])) {
@@ -639,6 +648,8 @@ int ArgPos(char *str, int argc, char **argv) {
 
 int main(int argc, char **argv) {
   int i;
+
+  // 没有指定参数时, 则打印使用帮助
   if (argc == 1) {
     printf("WORD VECTOR estimation toolkit v 0.1c\n\n");
     printf("Options:\n");
@@ -682,9 +693,14 @@ int main(int argc, char **argv) {
     printf("./word2vec -train data.txt -output vec.txt -size 200 -window 5 -sample 1e-4 -negative 5 -hs 0 -binary 0 -cbow 1 -iter 3\n\n");
     return 0;
   }
+
   output_file[0] = 0;
   save_vocab_file[0] = 0;
   read_vocab_file[0] = 0;
+
+  // 参数解析, 这里使用了自定义的 ArgPos() 函数, 
+  // ArgPos() 实际上是遍历参数列表, 判断指定的参数是否存在:
+  // 如果存在, 则返回其在参数列表中的索引位置; 否则返回 -1
   if ((i = ArgPos((char *)"-size", argc, argv)) > 0) layer1_size = atoi(argv[i + 1]);
   if ((i = ArgPos((char *)"-train", argc, argv)) > 0) strcpy(train_file, argv[i + 1]);
   if ((i = ArgPos((char *)"-save-vocab", argc, argv)) > 0) strcpy(save_vocab_file, argv[i + 1]);
@@ -703,13 +719,17 @@ int main(int argc, char **argv) {
   if ((i = ArgPos((char *)"-iter", argc, argv)) > 0) iter = atoi(argv[i + 1]);
   if ((i = ArgPos((char *)"-min-count", argc, argv)) > 0) min_count = atoi(argv[i + 1]);
   if ((i = ArgPos((char *)"-classes", argc, argv)) > 0) classes = atoi(argv[i + 1]);
+
   vocab = (struct vocab_word *)calloc(vocab_max_size, sizeof(struct vocab_word));
   vocab_hash = (int *)calloc(vocab_hash_size, sizeof(int));
   expTable = (real *)malloc((EXP_TABLE_SIZE + 1) * sizeof(real));
+
   for (i = 0; i < EXP_TABLE_SIZE; i++) {
     expTable[i] = exp((i / (real)EXP_TABLE_SIZE * 2 - 1) * MAX_EXP); // Precompute the exp() table
     expTable[i] = expTable[i] / (expTable[i] + 1);                   // Precompute f(x) = x / (x + 1)
   }
+
   TrainModel();
+
   return 0;
 }
